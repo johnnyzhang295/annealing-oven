@@ -20,3 +20,6 @@ class Thermocouple:
             
     def Stop():
         pass
+
+    def GetTempC(self):
+        return self.tempC

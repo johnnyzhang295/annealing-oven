@@ -2,19 +2,19 @@ import time
 import adafruit_max31855
 
 class Thermocouple:
-    tempC = 0
-    CS = 24
-    CLK = 25
     
-    DO = 18
-    def Setup():
+    def __init__(self):
         #setup stuff
-        sensor = adafruit_max31855.MAX31855(CLK, CS, DO)
+        CLK = 25
+        CS = 24
+        DO = 18
+        self.sensor = adafruit_max31855.MAX31855(CLK, CS, DO)
+        self.tempC = 0
         
-    def Start():
+    def Start(self):
         while True:
-            this.tempC = sensor.temperature()
-            print('Temperature: {} C'.format(this.tempC))
+            tempC = self.sensor.readTempC()
+            print('Temperature: {} C'.format(tempC))
             
             time.sleep(2.0)
             

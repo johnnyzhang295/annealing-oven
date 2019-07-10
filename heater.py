@@ -5,7 +5,7 @@ class Heater:
     channel_f = 23
     channel_h = 24
     
-    def Setup():
+    def __init__(self):
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(channel_f, GPIO.OUT)
         GPIO.setup(channel_h, GPIO.OUT)

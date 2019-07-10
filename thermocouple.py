@@ -11,15 +11,15 @@ class Thermocouple:
         self.sensor = adafruit_max31855.MAX31855(CLK, CS, DO)
         self.tempC = 0
         
-    def Start(self):
+    def start(self):
         while True:
             tempC = self.sensor.readTempC()
             print('Temperature: {} C'.format(tempC))
             
             time.sleep(2.0)
             
-    def Stop():
+    def stop():
         pass
 
-    def GetTempC(self):
+    def getTempC(self):
         return self.tempC

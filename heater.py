@@ -16,12 +16,12 @@ class Heater:
         #Fan is always on
         GPIO.output(channel_f, GPIO.LOW)
         
-    def On(self):
+    def on(self):
         GPIO.output(self.channel_h, GPIO.LOW)
         self.power.start(0)
         
-    def Off(self):
+    def off(self):
         GPIO.output(self.channel_h, GPIO.LOW)
 
-    def PWM(self, duty_cycle):
+    def pwm(self, duty_cycle):
         self.power.ChangeDutyCycle(duty_cycle)

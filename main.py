@@ -3,4 +3,4 @@ import thermocouple
 if __name__ == '__main__':
     thermo = thermocouple.Thermocouple()
     
-    thermo.Start()
+    thermo.start()

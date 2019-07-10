@@ -1,13 +1,13 @@
-from simple_pid import PID
+from pid import PID
 import math
 
-temp = 73
+temp = 157
 sp = 100
-pid = PID(1,.1, .1, setpoint=100)
+pc = PID(.25, 0, 0, 100)
 
-error = pid(temp)
+error = pc(temp)
 while (math.isclose(sp, temp) == False):
-	error = pid(temp)
+	error = pc(temp)
 	temp = temp + error
 	print(temp)
 

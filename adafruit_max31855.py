@@ -1,6 +1,5 @@
-# The MIT License (MIT)
-#
-# Copyright (c) 2017 Radomir Dopieralski for Adafruit Industries.
+# Copyright (c) 2014 Adafruit Industries
+# Author: Tony DiCola
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -19,73 +18,88 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+import logging
+import math
 
-"""
-``adafruit_max31855``
-===========================
+import Adafruit_GPIO as GPIO
+import Adafruit_GPIO.SPI as SPI
 
-This is a CircuitPython driver for the Maxim Integrated MAX31855 thermocouple
-amplifier module.
 
-* Author(s): Radomir Dopieralski
-
-Implementation Notes
---------------------
-
-**Hardware:**
-
-* Adafruit `MAX31855 Thermocouple Amplifier Breakout
-  <https://www.adafruit.com/product/269>`_ (Product ID: 269)
-
-**Software and Dependencies:**
-
-* Adafruit CircuitPython firmware for the ESP8622 and M0-based boards:
-  https://github.com/adafruit/circuitpython/releases
-* Adafruit's Bus Device library: https://github.com/adafruit/Adafruit_CircuitPython_BusDevice
-"""
-try:
-    import struct
-except ImportError:
-    import ustruct as struct
-
-from adafruit_bus_device.spi_device import SPIDevice
-
-__version__ = "0.0.0-auto.0"
-__repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_MAX31855.git"
-
-class MAX31855:
-    """
-    Driver for the MAX31855 thermocouple amplifier.
+class MAX31855(object):
+    """Class to represent an Adafruit MAX31855 thermocouple temperature
+    measurement board.
     """
 
-    def __init__(self, spi, cs):
-        self.spi_device = SPIDevice(spi, cs)
-        self.data = bytearray(4)
+    def __init__(self, clk=None, cs=None, do=None, spi=None, gpio=None):
+        """Initialize MAX31855 device with software SPI on the specified CLK,
+        CS, and DO pins.  Alternatively can specify hardware SPI by sending an
+        Adafruit_GPIO.SPI.SpiDev device in the spi parameter.
+        """
+        self._logger = logging.getLogger('Adafruit_MAX31855.MAX31855')
+        self._spi = None
+        # Handle hardware SPI
+        if spi is not None:
+            self._logger.debug('Using hardware SPI')
+            self._spi = spi
+        elif clk is not None and cs is not None and do is not None:
+            self._logger.debug('Using software SPI')
+            # Default to platform GPIO if not provided.
+            if gpio is None:
+                gpio = GPIO.get_platform_gpio()
+            self._spi = SPI.BitBang(gpio, clk, None, do, cs)
+        else:
+            raise ValueError('Must specify either spi for for hardware SPI or clk, cs, and do for softwrare SPI!')
+        self._spi.set_clock_hz(5000000)
+        self._spi.set_mode(0)
+        self._spi.set_bit_order(SPI.MSBFIRST)
 
-    def _read(self, internal=False):
-        with self.spi_device as spi:
-            spi.readinto(self.data)  #pylint: disable=no-member
-        if self.data[3] & 0x01:
-            raise RuntimeError("thermocouple not connected")
-        if self.data[3] & 0x02:
-            raise RuntimeError("short circuit to ground")
-        if self.data[3] & 0x04:
-            raise RuntimeError("short circuit to power")
-        if self.data[1] & 0x01:
-            raise RuntimeError("faulty reading")
-        temp, refer = struct.unpack('>hh', self.data)
-        refer >>= 4
-        temp >>= 2
-        if internal:
-            return refer
-        return temp
+    def readInternalC(self):
+        """Return internal temperature value in degrees celsius."""
+        v = self._read32()
+        # Ignore bottom 4 bits of thermocouple data.
+        v >>= 4
+        # Grab bottom 11 bits as internal temperature data.
+        internal = v & 0x7FF
+        if v & 0x800:
+            # Negative value, take 2's compliment. Compute this with subtraction
+            # because python is a little odd about handling signed/unsigned.
+            internal -= 4096
+        # Scale by 0.0625 degrees C per bit and return value.
+        return internal * 0.0625
 
-    @property
-    def temperature(self):
-        """Thermocouple temperature in degrees Celsius."""
-        return self._read() / 4
+    def readTempC(self):
+        """Return the thermocouple temperature value in degrees celsius."""
+        v = self._read32()
+        # Check for error reading value.
+        if v & 0x7:
+            return float('NaN')
+        # Check if signed bit is set.
+        if v & 0x80000000:
+            # Negative value, take 2's compliment. Compute this with subtraction
+            # because python is a little odd about handling signed/unsigned.
+            v >>= 18
+            v -= 16384
+        else:
+            # Positive value, just shift the bits to get the value.
+            v >>= 18
+        # Scale by 0.25 degrees C per bit and return value.
+        return v * 0.25
 
-    @property
-    def reference_temperature(self):
-        """Internal reference temperature in degrees Celsius."""
-        return self._read(True) * 0.625
+    def readState(self):
+        """Return dictionary containing fault codes and hardware problems
+        """
+        v = self._read32()
+        return {
+            'openCircuit': (v & (1 << 0)) > 0,
+            'shortGND': (v & (1 << 1)) > 0,
+            'shortVCC': (v & (1 << 2)) > 0,
+            'fault': (v & (1 << 16)) > 0
+        }
+    def _read32(self):
+        # Read 32 bits from the SPI bus.
+        raw = self._spi.read(4)
+        if raw is None or len(raw) != 4:
+            raise RuntimeError('Did not read expected number of bytes from device!')
+        value = raw[0] << 24 | raw[1] << 16 | raw[2] << 8 | raw[3]
+        self._logger.debug('Raw value: 0x{0:08X}'.format(value & 0xFFFFFFFF))
+        return value

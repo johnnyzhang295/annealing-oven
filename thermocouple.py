@@ -13,7 +13,7 @@ class Thermocouple:
         
     def Start():
         while True:
-            this.tempC = sensor.readTempC()
+            this.tempC = sensor.temperature()
             print('Temperature: {} C'.format(this.tempC))
             
             time.sleep(2.0)

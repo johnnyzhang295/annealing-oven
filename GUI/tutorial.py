@@ -11,7 +11,7 @@ def saveInput(material, thickness):
 	user_input = np.array([materials_value, thickness_value])
 
 	np.savetxt('gui_output.txt', user_input, fmt='%s', newline=" ")
-
+	
 
 app = QApplication([])
 app.setStyle('Windows')
@@ -33,6 +33,14 @@ thickness.setFixedWidth(50)
 
 start_button = QPushButton("Start")
 start_button.setFixedWidth(100)
+start_button.setStyleSheet("""
+	QPushButton{
+		background-color: 
+	}
+	QPushButton:clicked{
+		background-color: #3cbaa2
+	}
+	""")
 start_button.clicked.connect(lambda:saveInput(materials, thickness))
 
 layout.addWidget(m_label,1,1)

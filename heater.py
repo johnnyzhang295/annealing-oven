@@ -2,7 +2,6 @@ import RPi.GPIO as GPIO
 import time
 
 class Heater:
-    
     def __init__(self):
         channel_f = 23
         channel_h = 24

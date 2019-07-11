@@ -1,6 +1,17 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
+import numpy as np
+
+def saveInput(material, thickness):
+
+	materials_value = material.currentText()
+	thickness_value = thickness.text()
+
+	user_input = np.array([materials_value, thickness_value])
+
+	np.savetxt('gui_output.txt', user_input, fmt='%s', newline=" ")
+
 
 app = QApplication([])
 app.setStyle('Windows')
@@ -22,6 +33,7 @@ thickness.setFixedWidth(50)
 
 start_button = QPushButton("Start")
 start_button.setFixedWidth(100)
+start_button.clicked.connect(lambda:saveInput(materials, thickness))
 
 layout.addWidget(m_label,1,1)
 layout.addWidget(t_label,2,1)

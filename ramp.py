@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Ramp:
-	
 	def __init__(self, fname):
 		self.loadProgrammable('anneal_plastic.txt')
 
@@ -29,7 +28,7 @@ class Ramp:
 		cooling = np.arange(self.setpoint, 0, -(self.cool_rate/60))
 
 		total_time = self.ramp_up_time*60 + self.soak_period + cooling.size
-		x_axis = np.linspace(0, total_time, total_time)
+		x_axis = np.linspace(0, total_time/60, total_time)
 		y_axis = np.concatenate((ramp_up, hold, cooling))
 
 		return np.array([x_axis, y_axis])

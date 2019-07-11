@@ -35,6 +35,8 @@ class Ramp:
 
 	def plot(self):
 		plt.plot(self.profile[0], self.profile[1])
+		plt.xlabel('Hours')
+		plt.ylabel('Temperature (Celsius)')
 
 	def loadProgrammable(self, fname):
 		self.material = np.loadtxt(fname, dtype=str, usecols=0).item()

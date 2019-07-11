@@ -14,7 +14,6 @@ class Material(QWidget):
 
 		self.m_label = QLabel("Material: ")
 
-
 class Thickness(QWidget):
 	def __init__(self):
 		super().__init__()
@@ -24,43 +23,50 @@ class Thickness(QWidget):
 
 		self.t_label = QLabel("Thickness (mm): ")
 
-
 class Start(QWidget):
 	def __init__(self):
 		super().__init__()
 		self.start_button = QPushButton("Start")
 		self.start_button.setFixedWidth(100)
-		self.start_button.setStyleSheet("""
-			QPushButton{
-				background-color: 
-			}
-			QPushButton:pressed{
-				background-color: #3cbaa2
-			}
-			""")
 
 	def saveInput(self, material, thickness):
-
 		m_value = material.currentText()
 		t_value = thickness.text()
 		user_input = np.array([m_value, t_value])
 
 		np.savetxt('gui_output.txt', user_input, fmt='%s', newline=" ")
 		self.start_button.setEnabled(False)
-		
+
+class Temperature(QWidget):
+	def __init__(self):
+		super().__init__()
+		self.t_box = QLineEdit("0")
+		self.t_box.setValidator(QDoubleValidator())
+		self.t_box.setFixedWidth(50)
+
+		self.t_label = QLabel("Desired Temperature (C): ")
+
 	
 if __name__ == '__main__':
 
 	app = QApplication([])
 	app.setStyle('Windows')
 
+	tab_window = QTabWidget()
 	window = QWidget()
+	mode_2 = QWidget()
+	tab_window.addTab(window, "Mode 1")
+	tab_window.addTab(mode_2, "Mode 2")
 	layout = QGridLayout()
+	mode2_layout = QGridLayout()
 
 	m = Material()
 	t = Thickness()
-
 	s = Start()
+	temp = Temperature()
+	mode2_layout.addWidget(temp.t_label, 2,1)
+	mode2_layout.addWidget(temp.t_box,2,2)
+	mode2_layout.setAlignment(Qt.AlignLeft)
 
 	layout.addWidget(m.m_label,1,1)
 	layout.addWidget(t.t_label,2,1)
@@ -71,12 +77,10 @@ if __name__ == '__main__':
 
 	s.start_button.clicked.connect(lambda:Start.saveInput(s, m.m_box, t.t_box))
 
-
 	window.setLayout(layout)
-	window.setGeometry(500,500,700,500)
-	window.show()
-
-
+	mode_2.setLayout(mode2_layout)
+	tab_window.setGeometry(500,500,700,500)
+	tab_window.show()
 
 	app.exec_()
 
